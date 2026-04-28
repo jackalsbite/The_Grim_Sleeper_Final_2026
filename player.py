@@ -34,13 +34,12 @@ class Player:
 
         dt = kn.time.get_delta()
 
-        input_direction = kn.input.get_direction("up", "right", "down", "left")
-        self.xf.pos += self.speed * dt * input_direction
+        # input_direction = kn.input.get_direction("up", "right", "down", "left")
+        # self.xf.pos += self.speed * dt * input_direction
         
 
     def draw(self):
         kn.renderer.draw(
             self.texture,
-            self.xf,
             kn.Anchor.CENTER
     )

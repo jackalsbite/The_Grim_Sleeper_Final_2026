@@ -13,10 +13,18 @@ class Root:
 
         FSM.enter_state("menu")
 
-while kn.window.is_open():
-    kn.event.poll()
+    def run(self) -> None:
 
-    kn.renderer.clear()
-    kn.renderer.present()
+        while kn.window.is_open():
+            state = FSM.get_current_state()
 
-kn.quit
+        for e in kn.event.poll():
+            state.handle_event(e)
+        
+        state.update()
+        kn.renderer.present()
+
+if __name__ == '__main__':
+    kn.init(debug=True)
+    Root().run()
+    kn.quit
