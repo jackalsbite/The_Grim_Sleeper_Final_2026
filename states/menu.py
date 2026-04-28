@@ -1,6 +1,6 @@
 import pykraken as kn
-from fsm import FSM
-from fsm import FSM, StateType
+from states.fsm import FSM
+from states.fsm import FSM, StateType
 
 class MenuState(StateType):
     def __init__(self) -> None:

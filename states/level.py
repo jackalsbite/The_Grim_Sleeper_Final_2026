@@ -1,6 +1,6 @@
 import pykraken as kn
 from player import Player
-from fsm import FSM, StateType
+from states.fsm import FSM, StateType
 
 class LevelState(StateType):
     def __init__(self):
