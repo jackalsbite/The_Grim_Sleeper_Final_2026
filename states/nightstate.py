@@ -9,6 +9,8 @@ class NightState(StateType):
         self.tilemap = kn.tilemap.Map()
         self.tilemap.load("tilemap/map.tmx")
 
+        self.player = Player()
+
     def startup(self):
         pass
         

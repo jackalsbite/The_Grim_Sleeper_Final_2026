@@ -24,7 +24,7 @@ kn.input.bind("Interact", actions=[
 class Player:
     def __init__(self):
         
-        self.speed = 50
+        self.speed = 150
 
         self.collider = kn.Rect(0, 0, 20, 20)
         self.interact_box = kn.Rect(0, 0, 22, 22)
