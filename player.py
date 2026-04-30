@@ -27,6 +27,8 @@ class Player:
         self.speed = 50
 
         self.collider = kn.Rect(0, 0, 20, 20)
+        self.interact_box = kn.Rect(0, 0, 22, 22)
+
         pa = kn.PixelArray("assets/player.png")
         self.texture = kn.Texture(pa)
 
@@ -36,8 +38,12 @@ class Player:
 
         # input_direction = kn.input.get_direction("up", "right", "down", "left")
         # self.xf.pos += self.speed * dt * input_direction
-        
 
+    def interact(self):
+        pass
+
+        # On interact action bind, when interact rect overlaps with an interactable rect, check the interacted rect
+        
     def draw(self):
         kn.renderer.draw(
             self.texture,
