@@ -1,64 +1,104 @@
+import random
 import pykraken as kn
 
 
-class interactables:
+class Interactables:
     def __init__(self):
-        pass
+        self.grave_cleaning_coordinates = []
+        self.grave_flower_coordinates = []
+        self.chime_coordinates = []
 
-    #   possible_grave_cleaning_coordinates = list of coordinates
-    #   possible_grave_flower_coordinates = list of coordinates
-    #   possible_chime_coordinates = list of coordinates
+        self.current_tasks = []
+        self.total_tasks = 0
+        self.current_tasks_counter = 0
 
-    def assign_tasks(self): # do the lists need to be parameters?
-        pass
+    def assign_tasks(
+        self,
+        possible_grave_cleaning_coordinates,
+        possible_grave_flower_coordinates,
+        possible_chime_coordinates
+    ):
+        self.grave_cleaning_coordinates = []
+        self.grave_flower_coordinates = []
+        self.chime_coordinates = []
 
-        #   grave_cleaning_coordinates: empty list
-        #   grave_flower_coordinates: empty list
-        #   chime_coordinates: empty list
+        for coordinate in possible_grave_cleaning_coordinates:
+            if random.random() <= 0.10:
+                self.grave_cleaning_coordinates.append(coordinate)
 
-        #   for coordinate in possible_grave_cleaning_coordinates:
-        #       10% chance to mark
-        #       append marked coordinates to the list
-        #       if number of marked = 10
-        #           stop marking
-        
-        #   for coordinate in possible_grave_flower_coordinates:
-        #       10% chance to mark
-        #       append marked coordinates to the list
-        #       if number of marked = 5
-        #           stop marking
-        
+            if len(self.grave_cleaning_coordinates) >= 10:
+                break
 
-        #   for coordinate in possible_chime_coordinates:
-        #       10% chance to mark
-        #       append marked coordinates to the list
-        #       if number of marked = 3
-        #           stop marking
-    
+        for coordinate in possible_grave_flower_coordinates:
+            if random.random() <= 0.10:
+                self.grave_flower_coordinates.append(coordinate)
+
+            if len(self.grave_flower_coordinates) >= 5:
+                break
+
+        for coordinate in possible_chime_coordinates:
+            if random.random() <= 0.10:
+                self.chime_coordinates.append(coordinate)
+
+            if len(self.chime_coordinates) >= 3:
+                break
+
     def spawn_tasks(self):
-        pass
+        self.current_tasks = []
 
-        # current_tasks = empty list
+        for coordinate in self.grave_cleaning_coordinates:
+            task = {
+                "type": "grave_cleaning",
+                "coordinate": coordinate,
+                "finished": False
+            }
 
-        #   for coordinate in grave_cleaning_coordinates:
-        #       append to current tasks
-        #       spawn dirty grave
+            self.current_tasks.append(task)
 
-        #   for coordinate in grave_flower_coordinates:
-        #       append to current tasks
-        #       spawn grave that needs flowers
+            # Replace this with your actual pykraken spawn code.
+            # Example:
+            # kn.spawn("dirty_grave", coordinate)
 
-        #   for coordinate in chime_coordinates:
-        #       append to current tasks
-        #       spawn chime markers
+        for coordinate in self.grave_flower_coordinates:
+            task = {
+                "type": "grave_flowers",
+                "coordinate": coordinate,
+                "finished": False
+            }
+
+            self.current_tasks.append(task)
+
+            # Replace this with your actual pykraken spawn code.
+            # Example:
+            # kn.spawn("grave_needs_flowers", coordinate)
+
+        for coordinate in self.chime_coordinates:
+            task = {
+                "type": "chime",
+                "coordinate": coordinate,
+                "finished": False
+            }
+
+            self.current_tasks.append(task)
+
+            # Replace this with your actual pykraken spawn code.
+            # Example:
+            # kn.spawn("chime_marker", coordinate)
+
+        self.task_counter()
 
     def task_counter(self):
-        pass
+        self.total_tasks = len(self.current_tasks)
 
-        #   total_tasks = (int)
-        #   current_tasks_counter = (int)
+        unfinished_tasks = 0
 
-        #   for task in current_tasks:
-        #       total_tasks = number of tasks
-        #       current_tasks_counter = number of tasks
-        #           when one task is marked as finished, decrease current tasks counter
+        for task in self.current_tasks:
+            if task["finished"] == False:
+                unfinished_tasks += 1
+
+        self.current_tasks_counter = unfinished_tasks
+
+    def complete_task(self, task):
+        if task in self.current_tasks and task["finished"] == False:
+            task["finished"] = True
+            self.task_counter()

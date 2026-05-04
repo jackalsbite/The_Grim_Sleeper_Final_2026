@@ -2,17 +2,23 @@ import pykraken as kn
 
 
 class DirtyGrave:
-    def __init__(self):
+    def __init__(self, coordinate, interactables):
+        self.texture = kn.Texture("Dirtygrave.png")
+        self.coordinate = coordinate
+        self.interactables = interactables
+        self.active = True
 
-        self.texture
-        self.coordinate
-    
     def interact(self):
-        pass
+        if self.active:
+            self.active = False
 
-        #   if player interacts, mark as finished, and remove it from the tasks in interactables
+            # Tell the Interactables class this task is finished.
+            self.interactables.complete_task_by_coordinate(
+                "grave_cleaning",
+                self.coordinate
+            )
 
     def draw(self):
-        pass
-
-        # draw self at self.coordinate
+        if self.active:
+            # Replace this with the actual pykraken draw function if different.
+            kn.draw(self.texture, self.coordinate)
