@@ -1,5 +1,6 @@
 import random
-import pykraken as kn
+
+from interactables.dirtygrave import DirtyGrave
 
 
 class Interactables:
@@ -9,6 +10,8 @@ class Interactables:
         self.chime_coordinates = []
 
         self.current_tasks = []
+        self.active_objects = []
+
         self.total_tasks = 0
         self.current_tasks_counter = 0
 
@@ -45,47 +48,53 @@ class Interactables:
 
     def spawn_tasks(self):
         self.current_tasks = []
+        self.active_objects = []
 
         for coordinate in self.grave_cleaning_coordinates:
-            task = {
-                "type": "grave_cleaning",
-                "coordinate": coordinate,
-                "finished": False
-            }
-
+            task = self.create_task("grave_cleaning", coordinate)
             self.current_tasks.append(task)
-
-            # Replace this with your actual pykraken spawn code.
-            # Example:
-            # kn.spawn("dirty_grave", coordinate)
+            self.active_objects.append(DirtyGrave(coordinate, self, task))
 
         for coordinate in self.grave_flower_coordinates:
-            task = {
-                "type": "grave_flowers",
-                "coordinate": coordinate,
-                "finished": False
-            }
-
+            task = self.create_task("grave_flowers", coordinate)
             self.current_tasks.append(task)
 
-            # Replace this with your actual pykraken spawn code.
+            # Add a GraveFlowers class here later, then append it to active_objects.
             # Example:
-            # kn.spawn("grave_needs_flowers", coordinate)
+            # self.active_objects.append(GraveFlowers(coordinate, self, task))
 
         for coordinate in self.chime_coordinates:
-            task = {
-                "type": "chime",
-                "coordinate": coordinate,
-                "finished": False
-            }
-
+            task = self.create_task("chime", coordinate)
             self.current_tasks.append(task)
 
-            # Replace this with your actual pykraken spawn code.
+            # Add a Chime class here later, then append it to active_objects.
             # Example:
-            # kn.spawn("chime_marker", coordinate)
+            # self.active_objects.append(Chime(coordinate, self, task))
 
         self.task_counter()
+
+    def create_task(self, task_type, coordinate):
+        return {
+            "type": task_type,
+            "coordinate": coordinate,
+            "finished": False
+        }
+
+    def update(self):
+        self.remove_inactive_objects()
+        self.task_counter()
+
+    def draw(self):
+        for obj in self.active_objects:
+            obj.draw()
+
+    def interact_at(self, coordinate):
+        for obj in self.active_objects:
+            if obj.active and obj.coordinate == coordinate:
+                obj.interact()
+                return True
+
+        return False
 
     def task_counter(self):
         self.total_tasks = len(self.current_tasks)
@@ -102,3 +111,28 @@ class Interactables:
         if task in self.current_tasks and task["finished"] == False:
             task["finished"] = True
             self.task_counter()
+
+    def complete_task_by_coordinate(self, task_type, coordinate):
+        for task in self.current_tasks:
+            if (
+                task["type"] == task_type
+                and task["coordinate"] == coordinate
+                and task["finished"] == False
+            ):
+                self.complete_task(task)
+                return True
+
+        return False
+
+    def remove_inactive_objects(self):
+        active_objects = []
+
+        for obj in self.active_objects:
+            if obj.active:
+                active_objects.append(obj)
+
+        self.active_objects = active_objects
+
+    def all_tasks_finished(self):
+        self.task_counter()
+        return self.total_tasks > 0 and self.current_tasks_counter == 0
