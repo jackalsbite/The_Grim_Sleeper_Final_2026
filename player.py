@@ -24,7 +24,7 @@ kn.input.bind("Interact", actions=[
 class Player:
     def __init__(self):
         self.speed = 100
-        self.position = kn.Vec2(200, 125)
+        self.position = kn.Vec2(600, 600)
 
         self.frame_width = 32
         self.frame_height = 32
@@ -118,8 +118,21 @@ class Player:
         self.collider.x = self.position.x - 10
         self.collider.y = self.position.y - 10
 
-        self.interact_box.x = self.position.x - 11
-        self.interact_box.y = self.position.y - 11
+        if self.facing == "up":
+            self.interact_box.x = self.position.x - 11
+            self.interact_box.y = self.position.y - 32
+
+        elif self.facing == "down":
+            self.interact_box.x = self.position.x - 11
+            self.interact_box.y = self.position.y + 10
+
+        elif self.facing == "left":
+            self.interact_box.x = self.position.x - 32
+            self.interact_box.y = self.position.y - 11
+
+        elif self.facing == "right":
+            self.interact_box.x = self.position.x + 10
+            self.interact_box.y = self.position.y - 11
 
     def interact(self):
         pass

@@ -29,8 +29,13 @@ class Interactables:
             if random.random() <= 0.10:
                 self.grave_cleaning_coordinates.append(coordinate)
 
-            if len(self.grave_cleaning_coordinates) >= 10:
+            if len(self.grave_cleaning_coordinates) >= 50:
                 break
+
+        # Safety fallback: prevents the day from spawning with zero visible
+        # grave-cleaning tasks just because random was a little gremlin.
+        if len(self.grave_cleaning_coordinates) == 0 and len(possible_grave_cleaning_coordinates) > 0:
+            self.grave_cleaning_coordinates.append(possible_grave_cleaning_coordinates[0])
 
         for coordinate in possible_grave_flower_coordinates:
             if random.random() <= 0.10:
@@ -84,13 +89,26 @@ class Interactables:
         self.remove_inactive_objects()
         self.task_counter()
 
-    def draw(self):
-        for obj in self.active_objects:
-            obj.draw()
+    def rects_overlap(self, a, b):
+        return (
+            a.x < b.x + b.w
+            and a.x + a.w > b.x
+            and a.y < b.y + b.h
+            and a.y + a.h > b.y
+        )
 
-    def interact_at(self, coordinate):
+    def draw(self, tile_size):
         for obj in self.active_objects:
-            if obj.active and obj.coordinate == coordinate:
+            obj.draw(tile_size)
+
+    def interact_with_box(self, interact_box, tile_size):
+        for obj in self.active_objects:
+            if obj.active == False:
+                continue
+
+            obj_rect = obj.get_interaction_rect(tile_size)
+
+            if self.rects_overlap(interact_box, obj_rect):
                 obj.interact()
                 return True
 

@@ -25,13 +25,19 @@ class FSM:
         if not entry:
             kn.log.error(f"State '{state}' is not registered.")
             return
-        
+
         if entry.get("persistent"):
             if entry.get("instance") is None:
                 entry["instance"] = entry["factory"]()
-            FSM._stack.append(entry["instance"])
+
+            new_state = entry["instance"]
+            FSM._stack.append(new_state)
         else:
-            FSM._stack.append(entry["factory"]())
+            new_state = entry["factory"]()
+            FSM._stack.append(new_state)
+
+        if hasattr(new_state, "startup"):
+            new_state.startup()
  
     @staticmethod
     def exit_state() -> None:
