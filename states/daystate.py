@@ -141,6 +141,14 @@ class DayState(StateType):
     def handle_event(self, event):
         pass
 
+    def get_collision_layer(self):
+        tile_layers = self.tilemap.tile_layers
+
+        if len(tile_layers) > 2:
+            return tile_layers[2]
+
+        return None
+
     def update(self):
         dt = kn.time.get_delta()
 
@@ -150,7 +158,7 @@ class DayState(StateType):
             self.go_to_nightstate()
             return
 
-        self.player.move()
+        self.player.move(self.get_collision_layer())
 
         if kn.input.is_just_pressed("Interact"):
             self.interactables.interact_with_box(
@@ -191,11 +199,19 @@ class DayState(StateType):
         if len(tile_layers) == 0:
             self.tilemap.draw()
         else:
-            for layer in tile_layers:
-                layer.draw()
+            # Draw lower layers, including the collision layer at index 2.
+            for i in range(len(tile_layers)):
+                if i <= 2:
+                    tile_layers[i].draw()
 
-        self.interactables.draw(self.get_tile_size())
-        self.player.draw()
+            # Draw objects/player above lower layers.
+            self.interactables.draw(self.get_tile_size())
+            self.player.draw()
+
+            # Draw upper layers over the player.
+            for i in range(len(tile_layers)):
+                if i > 2:
+                    tile_layers[i].draw()
 
         self.camera.unset()
 
