@@ -1,4 +1,5 @@
 import pykraken as kn
+import game_audio
 from player import Player
 from states.fsm import FSM, StateType
 from deadpeople import Deadperson
@@ -74,6 +75,8 @@ class NightState(StateType):
         self.night_overlay_color = kn.Color(8, 18, 50, 135)
 
     def startup(self):
+        game_audio.play_night_background()
+
         self.unfinished_tasks = []
 
         for task in NightState.unfinished_tasks_from_day:
@@ -129,7 +132,7 @@ class NightState(StateType):
         # Skeletons only care about the player's body.
         if self.willow_mode == False:
             for dead_person in self.dead_people:
-                dead_person.update(self.player.collider)
+                dead_person.update(self.player.collider, self.player.position)
 
             self.check_night_end_conditions()
 
@@ -178,6 +181,7 @@ class NightState(StateType):
         self.end_timer = 0.0
 
     def go_to_menu(self):
+        game_audio.stop_background()
         self.camera.unset()
         FSM.exit_state()
         FSM.enter_state("menu")
@@ -203,6 +207,7 @@ class NightState(StateType):
         willow_rect = self.get_tile_rect(self.willow_coordinate)
 
         if self.rects_overlap(self.player.interact_box, willow_rect):
+            game_audio.play_interact()
             self.start_ending("Good job being responsible :D")
             return True
 
@@ -216,6 +221,7 @@ class NightState(StateType):
             dead_rect = dead_person.get_interaction_rect()
 
             if self.rects_overlap(self.player.interact_box, dead_rect):
+                game_audio.play_interact()
                 dead_person.interact()
                 return True
 

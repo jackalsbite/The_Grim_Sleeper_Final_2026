@@ -1,4 +1,6 @@
 import pykraken as kn
+import game_audio
+import random
 from collections import deque
 
 
@@ -8,6 +10,9 @@ class Deadperson:
         self.tile_size = tile_size
         self.path_tiles = path_tiles
         self.exit_coordinates = exit_coordinates
+
+        self.bone_sound_timer = 0.0
+        self.bone_sound_delay = random.uniform(2.0, 3.0)
 
         self.speed = 25
 
@@ -244,6 +249,34 @@ class Deadperson:
 
         return self.rects_overlap(test_collider, player_collider)
 
+    def distance_to_position(self, other_position):
+        if other_position is None:
+            return 0
+
+        x_distance = other_position.x - self.position.x
+        y_distance = other_position.y - self.position.y
+
+        return (x_distance * x_distance + y_distance * y_distance) ** 0.5
+
+    def get_bone_sound_volume(self, player_position):
+        distance = self.distance_to_position(player_position)
+
+        # Tweak these if needed.
+        full_volume_distance = 80
+        silent_distance = 450
+        max_volume = 0.55
+
+        if distance <= full_volume_distance:
+            return max_volume
+
+        if distance >= silent_distance:
+            return 0.0
+
+        distance_percent = (distance - full_volume_distance) / (silent_distance - full_volume_distance)
+        volume = max_volume * (1.0 - distance_percent)
+
+        return volume
+
     def interact(self):
         if self.active == False:
             return
@@ -291,7 +324,19 @@ class Deadperson:
 
             self.update_sprite_clip()
 
-    def update(self, player_collider=None):
+    def update_bone_sound(self, dt, player_position=None):
+        self.bone_sound_timer += dt
+
+        if self.bone_sound_timer >= self.bone_sound_delay:
+            self.bone_sound_timer = 0.0
+            self.bone_sound_delay = random.uniform(2.0, 3.0)
+
+            volume = self.get_bone_sound_volume(player_position)
+
+            if volume > 0.0:
+                game_audio.play_bone_step(volume)
+
+    def update(self, player_collider=None, player_position=None):
         if self.active == False:
             return
 
@@ -299,9 +344,9 @@ class Deadperson:
             return
 
         if self.path_index >= len(self.path):
-            self.move_to_final_target(player_collider)
+            self.move_to_final_target(player_collider, player_position)
         else:
-            self.move_along_path(player_collider)
+            self.move_along_path(player_collider, player_position)
 
         self.transform.pos = kn.Vec2(
             round(self.position.x),
@@ -310,22 +355,30 @@ class Deadperson:
 
         self.update_collider()
 
-    def move_along_path(self, player_collider=None):
+    def move_along_path(self, player_collider=None, player_position=None):
         target_tile = self.tuple_to_tile(self.path[self.path_index])
         target_position = self.tile_to_world_center(target_tile)
 
-        reached_target = self.move_toward_position(target_position, player_collider)
+        reached_target = self.move_toward_position(
+            target_position,
+            player_collider,
+            player_position
+        )
 
         if reached_target:
             self.path_index += 1
 
-    def move_to_final_target(self, player_collider=None):
+    def move_to_final_target(self, player_collider=None, player_position=None):
         if self.final_target_coordinate is None:
             return
 
         target_position = self.tile_to_world_center(self.final_target_coordinate)
 
-        reached_target = self.move_toward_position(target_position, player_collider)
+        reached_target = self.move_toward_position(
+            target_position,
+            player_collider,
+            player_position
+        )
 
         if reached_target:
             if self.returning_to_grave:
@@ -335,7 +388,7 @@ class Deadperson:
                 self.escaped = True
                 self.active = False
 
-    def move_toward_position(self, target_position, player_collider=None):
+    def move_toward_position(self, target_position, player_collider=None, player_position=None):
         dt = kn.time.get_delta()
 
         direction = kn.Vec2(
@@ -371,6 +424,7 @@ class Deadperson:
 
         self.position = new_position
         self.update_animation(dt)
+        self.update_bone_sound(dt, player_position)
 
         return False
 

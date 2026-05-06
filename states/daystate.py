@@ -1,4 +1,5 @@
 import pykraken as kn
+import game_audio
 from player import Player
 from states.fsm import FSM, StateType
 from states.nightstate import NightState
@@ -131,6 +132,8 @@ class DayState(StateType):
         self.possible_chime_coordinates = []
 
     def startup(self):
+        game_audio.play_day_background()
+
         self.time_left = self.day_length
 
         self.interactables.assign_tasks(
@@ -160,10 +163,15 @@ class DayState(StateType):
 
         if kn.input.is_just_pressed("Interact"):
             if self.try_shed_interaction() == False:
+                tasks_before_interaction = self.interactables.current_tasks_counter
+
                 self.interactables.interact_with_box(
                     self.player.interact_box,
                     self.get_tile_size()
                 )
+
+                if self.interactables.current_tasks_counter < tasks_before_interaction:
+                    game_audio.play_interact()
 
         self.interactables.update()
         self.snap_camera_to_player()
@@ -212,6 +220,7 @@ class DayState(StateType):
         shed_rect = self.get_tile_rect(self.shed_coordinate)
 
         if self.rects_overlap(self.player.interact_box, shed_rect):
+            game_audio.play_interact()
             self.go_to_nightstate()
             return True
 
