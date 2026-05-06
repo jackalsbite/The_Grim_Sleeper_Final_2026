@@ -220,6 +220,9 @@ class Player:
     def interact(self):
         pass
 
+    def _physics_process(self, delta: float) -> None:
+        pass
+    
     def draw(self):
         kn.renderer.draw(
             self.texture,
