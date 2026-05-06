@@ -1,3 +1,5 @@
+import sys
+
 import pykraken as kn
 from states.fsm import FSM
 from states.daystate import DayState
@@ -7,7 +9,7 @@ from states.menu import MenuState
 
 class Root:
     def __init__(self) -> None:
-        kn.init(debug=True)
+        kn.init(debug=sys.stderr is not None)
         kn.window.create("The Grim Sleeper", 800, 600)
 
         kn.renderer.set_default_filter_mode(kn.FilterMode.NEAREST)

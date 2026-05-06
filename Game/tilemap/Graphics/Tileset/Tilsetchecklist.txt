@@ -1,0 +1,21 @@
+GROUND LAYER
+Road
+Concrete path
+
+LAYER 2
+Trees
+Fences
+Bushes
+Stepping stones
+Flowers
+Puddles
+Tombstones
+Benches
+Streetlights
+Puddles
+
+BUILDINGS
+Maintenance building
+Gazebo
+Small office
+Mausoleum
