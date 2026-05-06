@@ -67,8 +67,11 @@ class Player:
         self.update_sprite_clip()
         self.update_boxes()
 
-    def move(self, collision_layer=None):
+    def move(self, collision_layer=None, blocking_rects=None):
         dt = kn.time.get_delta()
+
+        if blocking_rects is None:
+            blocking_rects = []
 
         input_direction = kn.input.get_direction("up", "right", "down", "left")
 
@@ -79,26 +82,23 @@ class Player:
 
             movement = self.speed * dt * input_direction
 
-            if collision_layer is None:
-                self.position += movement
-            else:
-                # Move X first so the player can slide along walls.
-                new_position = kn.Vec2(
-                    self.position.x + movement.x,
-                    self.position.y
-                )
+            # Move X first so the player can slide along walls and skeletons.
+            new_position = kn.Vec2(
+                self.position.x + movement.x,
+                self.position.y
+            )
 
-                if self.collides_with_layer(new_position, collision_layer) == False:
-                    self.position.x = new_position.x
+            if self.collides_at(new_position, collision_layer, blocking_rects) == False:
+                self.position.x = new_position.x
 
-                # Then move Y.
-                new_position = kn.Vec2(
-                    self.position.x,
-                    self.position.y + movement.y
-                )
+            # Then move Y.
+            new_position = kn.Vec2(
+                self.position.x,
+                self.position.y + movement.y
+            )
 
-                if self.collides_with_layer(new_position, collision_layer) == False:
-                    self.position.y = new_position.y
+            if self.collides_at(new_position, collision_layer, blocking_rects) == False:
+                self.position.y = new_position.y
 
             self.update_animation(dt)
         else:
@@ -121,6 +121,19 @@ class Player:
             self.collider_height
         )
 
+    def collides_at(self, position, collision_layer=None, blocking_rects=None):
+        if blocking_rects is None:
+            blocking_rects = []
+
+        if collision_layer is not None:
+            if self.collides_with_layer(position, collision_layer):
+                return True
+
+        if self.collides_with_blocking_rects(position, blocking_rects):
+            return True
+
+        return False
+
     def collides_with_layer(self, position, collision_layer):
         test_collider = self.get_collider_at(position)
         touched_tiles = collision_layer.get_from_area(test_collider)
@@ -130,6 +143,23 @@ class Player:
                 return True
 
         return False
+
+    def collides_with_blocking_rects(self, position, blocking_rects):
+        test_collider = self.get_collider_at(position)
+
+        for blocking_rect in blocking_rects:
+            if self.rects_overlap(test_collider, blocking_rect):
+                return True
+
+        return False
+
+    def rects_overlap(self, a, b):
+        return (
+            a.x < b.x + b.w
+            and a.x + a.w > b.x
+            and a.y < b.y + b.h
+            and a.y + a.h > b.y
+        )
 
     def update_facing(self, direction):
         if abs(direction.x) > abs(direction.y):

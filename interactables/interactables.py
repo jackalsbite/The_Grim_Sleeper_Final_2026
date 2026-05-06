@@ -29,7 +29,7 @@ class Interactables:
             if random.random() <= 0.10:
                 self.grave_cleaning_coordinates.append(coordinate)
 
-            if len(self.grave_cleaning_coordinates) >= 50:
+            if len(self.grave_cleaning_coordinates) >= 10:
                 break
 
         # Safety fallback: prevents the day from spawning with zero visible

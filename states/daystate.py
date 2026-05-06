@@ -1,6 +1,7 @@
 import pykraken as kn
 from player import Player
 from states.fsm import FSM, StateType
+from states.nightstate import NightState
 from interactables.interactables import Interactables
 
 
@@ -18,11 +19,15 @@ class DayState(StateType):
         self.timer_text = kn.Text(self.font, "")
         self.task_counter_text = kn.Text(self.font, "")
 
-        self.day_length = 300.0
+        self.day_length = 45.0
         self.time_left = self.day_length
 
         self.player = Player()
         self.interactables = Interactables()
+
+        # Shed interaction tile coordinate.
+        # Tile coordinate, not pixel coordinate.
+        self.shed_coordinate = kn.Vec2(61, 54)
 
         self.possible_grave_cleaning_coordinates = [
             kn.Vec2(68, 25),
@@ -141,14 +146,6 @@ class DayState(StateType):
     def handle_event(self, event):
         pass
 
-    def get_collision_layer(self):
-        tile_layers = self.tilemap.tile_layers
-
-        if len(tile_layers) > 2:
-            return tile_layers[2]
-
-        return None
-
     def update(self):
         dt = kn.time.get_delta()
 
@@ -161,16 +158,63 @@ class DayState(StateType):
         self.player.move(self.get_collision_layer())
 
         if kn.input.is_just_pressed("Interact"):
-            self.interactables.interact_with_box(
-                self.player.interact_box,
-                self.get_tile_size()
-            )
-        
+            if self.try_shed_interaction() == False:
+                self.interactables.interact_with_box(
+                    self.player.interact_box,
+                    self.get_tile_size()
+                )
+
         self.interactables.update()
         self.snap_camera_to_player()
 
         self.draw_world()
         self.draw_ui()
+
+    def get_collision_layer(self):
+        tile_layers = self.tilemap.tile_layers
+
+        if len(tile_layers) > 2:
+            return tile_layers[2]
+
+        return None
+
+    def get_tile_size(self):
+        tile_size = self.tilemap.tile_size
+
+        return kn.Vec2(
+            int(tile_size.x),
+            int(tile_size.y)
+        )
+
+    def get_tile_rect(self, tile_coordinate):
+        tile_size = self.get_tile_size()
+
+        return kn.Rect(
+            tile_coordinate.x * tile_size.x,
+            tile_coordinate.y * tile_size.y,
+            tile_size.x,
+            tile_size.y
+        )
+
+    def rects_overlap(self, a, b):
+        return (
+            a.x < b.x + b.w
+            and a.x + a.w > b.x
+            and a.y < b.y + b.h
+            and a.y + a.h > b.y
+        )
+
+    def try_shed_interaction(self):
+        if self.interactables.all_tasks_finished() == False:
+            return False
+
+        shed_rect = self.get_tile_rect(self.shed_coordinate)
+
+        if self.rects_overlap(self.player.interact_box, shed_rect):
+            self.go_to_nightstate()
+            return True
+
+        return False
 
     def snap_camera_to_player(self):
         self.camera.transform.pos = kn.Vec2(
@@ -183,14 +227,6 @@ class DayState(StateType):
             self.camera_zoom
         )
 
-    def get_tile_size(self):
-        tile_size = self.tilemap.tile_size
-
-        return kn.Vec2(
-            int(tile_size.x),
-            int(tile_size.y)
-        )
-
     def draw_world(self):
         self.camera.set()
 
@@ -199,12 +235,13 @@ class DayState(StateType):
         if len(tile_layers) == 0:
             self.tilemap.draw()
         else:
-            # Draw lower layers, including the collision layer at index 2.
+            # Draw layers 0, 1, and 2 first.
+            # Layer 2 is the collision layer, but it is still visible.
             for i in range(len(tile_layers)):
                 if i <= 2:
                     tile_layers[i].draw()
 
-            # Draw objects/player above lower layers.
+            # Draw objects and player above lower layers.
             self.interactables.draw(self.get_tile_size())
             self.player.draw()
 
@@ -227,6 +264,17 @@ class DayState(StateType):
         self.task_counter_text.draw(kn.Vec2(20, 50), kn.Anchor.TOP_LEFT)
 
     def go_to_nightstate(self):
+        unfinished_tasks = []
+
+        for task in self.interactables.current_tasks:
+            if task["finished"] == False:
+                unfinished_tasks.append(task)
+
+        NightState.receive_day_results(
+            unfinished_tasks,
+            self.player.position
+        )
+
         self.camera.unset()
         FSM.exit_state()
         FSM.enter_state("nightstate")
