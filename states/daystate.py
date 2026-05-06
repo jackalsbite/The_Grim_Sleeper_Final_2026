@@ -16,6 +16,7 @@ class DayState(StateType):
 
         self.font = kn.Font("font/leander.ttf", 20)
         self.timer_text = kn.Text(self.font, "")
+        self.task_counter_text = kn.Text(self.font, "")
 
         self.day_length = 300.0
         self.time_left = self.day_length
@@ -24,14 +25,101 @@ class DayState(StateType):
         self.interactables = Interactables()
 
         self.possible_grave_cleaning_coordinates = [
-            kn.Vec2(80, 80),
-            kn.Vec2(120, 80),
-            kn.Vec2(160, 80),
-            kn.Vec2(200, 80),
-            kn.Vec2(80, 120),
-            kn.Vec2(120, 120),
-            kn.Vec2(160, 120),
-            kn.Vec2(200, 120),
+            kn.Vec2(68, 25),
+            kn.Vec2(71, 25),
+            kn.Vec2(72, 25),
+
+            kn.Vec2(24, 26),
+            kn.Vec2(26, 26),
+            kn.Vec2(29, 26),
+            kn.Vec2(30, 26),
+            kn.Vec2(33, 26),
+            kn.Vec2(36, 26),
+            kn.Vec2(38, 26),
+            kn.Vec2(42, 26),
+            kn.Vec2(45, 26),
+            kn.Vec2(47, 26),
+            kn.Vec2(58, 26),
+            kn.Vec2(60, 26),
+            kn.Vec2(62, 26),
+
+            kn.Vec2(68, 29),
+            kn.Vec2(74, 29),
+
+            kn.Vec2(35, 30),
+            kn.Vec2(38, 30),
+            kn.Vec2(44, 30),
+            kn.Vec2(46, 30),
+            kn.Vec2(49, 30),
+            kn.Vec2(58, 30),
+            kn.Vec2(61, 30),
+
+            kn.Vec2(69, 33),
+            kn.Vec2(71, 33),
+            kn.Vec2(76, 33),
+
+            kn.Vec2(45, 34),
+            kn.Vec2(48, 34),
+            kn.Vec2(50, 34),
+            kn.Vec2(59, 34),
+            kn.Vec2(62, 34),
+
+            kn.Vec2(23, 36),
+            kn.Vec2(25, 36),
+            kn.Vec2(27, 36),
+            kn.Vec2(32, 36),
+            kn.Vec2(33, 36),
+            kn.Vec2(36, 36),
+            kn.Vec2(38, 36),
+
+            kn.Vec2(68, 37),
+            kn.Vec2(71, 37),
+            kn.Vec2(74, 37),
+
+            kn.Vec2(44, 38),
+            kn.Vec2(48, 38),
+            kn.Vec2(59, 38),
+            kn.Vec2(61, 38),
+
+            kn.Vec2(25, 40),
+            kn.Vec2(28, 40),
+            kn.Vec2(30, 40),
+            kn.Vec2(34, 40),
+            kn.Vec2(35, 40),
+            kn.Vec2(38, 40),
+
+            kn.Vec2(69, 41),
+            kn.Vec2(72, 41),
+            kn.Vec2(76, 41),
+            kn.Vec2(77, 41),
+            kn.Vec2(79, 41),
+
+            kn.Vec2(44, 47),
+            kn.Vec2(45, 47),
+            kn.Vec2(47, 47),
+            kn.Vec2(48, 47),
+            kn.Vec2(49, 47),
+
+            kn.Vec2(24, 49),
+            kn.Vec2(29, 49),
+            kn.Vec2(31, 49),
+            kn.Vec2(35, 49),
+
+            kn.Vec2(44, 51),
+            kn.Vec2(46, 51),
+            kn.Vec2(49, 51),
+
+            kn.Vec2(24, 55),
+            kn.Vec2(28, 55),
+            kn.Vec2(29, 55),
+
+            kn.Vec2(23, 59),
+
+            kn.Vec2(29, 63),
+
+            kn.Vec2(24, 67),
+            kn.Vec2(28, 67),
+            kn.Vec2(30, 67),
         ]
 
         self.possible_grave_flower_coordinates = []
@@ -53,6 +141,14 @@ class DayState(StateType):
     def handle_event(self, event):
         pass
 
+    def get_collision_layer(self):
+        tile_layers = self.tilemap.tile_layers
+
+        if len(tile_layers) > 2:
+            return tile_layers[2]
+
+        return None
+
     def update(self):
         dt = kn.time.get_delta()
 
@@ -62,7 +158,14 @@ class DayState(StateType):
             self.go_to_nightstate()
             return
 
-        self.player.move()
+        self.player.move(self.get_collision_layer())
+
+        if kn.input.is_just_pressed("Interact"):
+            self.interactables.interact_with_box(
+                self.player.interact_box,
+                self.get_tile_size()
+            )
+        
         self.interactables.update()
         self.snap_camera_to_player()
 
@@ -80,6 +183,14 @@ class DayState(StateType):
             self.camera_zoom
         )
 
+    def get_tile_size(self):
+        tile_size = self.tilemap.tile_size
+
+        return kn.Vec2(
+            int(tile_size.x),
+            int(tile_size.y)
+        )
+
     def draw_world(self):
         self.camera.set()
 
@@ -88,20 +199,19 @@ class DayState(StateType):
         if len(tile_layers) == 0:
             self.tilemap.draw()
         else:
-            # Draw lower/floor layers first.
-            if len(tile_layers) > 0:
-                tile_layers[0].draw()
+            # Draw lower layers, including the collision layer at index 2.
+            for i in range(len(tile_layers)):
+                if i <= 2:
+                    tile_layers[i].draw()
 
-            if len(tile_layers) > 1:
-                tile_layers[1].draw()
-
-            # Draw world objects after lower layers.
-            self.interactables.draw()
+            # Draw objects/player above lower layers.
+            self.interactables.draw(self.get_tile_size())
             self.player.draw()
 
-            # Draw upper layers above the player.
-            for i in range(2, len(tile_layers)):
-                tile_layers[i].draw()
+            # Draw upper layers over the player.
+            for i in range(len(tile_layers)):
+                if i > 2:
+                    tile_layers[i].draw()
 
         self.camera.unset()
 
@@ -109,6 +219,12 @@ class DayState(StateType):
         seconds = max(0, int(self.time_left))
         self.timer_text.text = f"Time Left: {seconds}"
         self.timer_text.draw(kn.Vec2(20, 20), kn.Anchor.TOP_LEFT)
+
+        completed_tasks = self.interactables.total_tasks - self.interactables.current_tasks_counter
+        total_tasks = self.interactables.total_tasks
+
+        self.task_counter_text.text = f"{completed_tasks}/{total_tasks}"
+        self.task_counter_text.draw(kn.Vec2(20, 50), kn.Anchor.TOP_LEFT)
 
     def go_to_nightstate(self):
         self.camera.unset()

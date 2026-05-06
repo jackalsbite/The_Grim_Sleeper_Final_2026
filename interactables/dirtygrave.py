@@ -3,7 +3,7 @@ import pykraken as kn
 
 class DirtyGrave:
     def __init__(self, coordinate, interactables, task=None):
-        self.texture = kn.Texture("placeholder.png")
+        self.texture = kn.Texture("assets/DirtyGrave.png")
         self.coordinate = coordinate
         self.interactables = interactables
         self.task = task
@@ -23,13 +23,31 @@ class DirtyGrave:
                 self.coordinate
             )
 
-    def draw(self):
+    def get_draw_position(self, tile_size):
+        return kn.Vec2(
+            self.coordinate.x * tile_size.x,
+            self.coordinate.y * tile_size.y
+        )
+    
+    def get_interaction_rect(self, tile_size):
+        draw_position = self.get_draw_position(tile_size)
+
+        return kn.Rect(
+            draw_position.x,
+            draw_position.y,
+            tile_size.x,
+            tile_size.y
+        )
+
+    def draw(self, tile_size):
         if self.active == False:
             return
 
-        # Keep all drawing in one tiny spot so it is easy to adjust if your
-        # pykraken version uses a different texture draw call.
-        if hasattr(kn, "draw"):
-            kn.draw(self.texture, self.coordinate)
-        elif hasattr(self.texture, "draw"):
-            self.texture.draw(self.coordinate)
+        transform = kn.Transform()
+        transform.pos = self.get_draw_position(tile_size)
+
+        kn.renderer.draw(
+            self.texture,
+            transform,
+            kn.Anchor.TOP_LEFT
+        )
