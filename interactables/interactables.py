@@ -26,10 +26,10 @@ class Interactables:
         self.chime_coordinates = []
 
         for coordinate in possible_grave_cleaning_coordinates:
-            if random.random() <= 0.10:
+            if random.random() <= 0.15:
                 self.grave_cleaning_coordinates.append(coordinate)
 
-            if len(self.grave_cleaning_coordinates) >= 10:
+            if len(self.grave_cleaning_coordinates) >= 15:
                 break
 
         # Safety fallback: prevents the day from spawning with zero visible

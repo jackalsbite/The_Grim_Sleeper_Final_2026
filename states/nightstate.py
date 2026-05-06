@@ -39,6 +39,7 @@ class NightState(StateType):
         self.font = kn.Font("font/leander.ttf", 20)
         self.night_text = kn.Text(self.font, "")
         self.dead_counter_text = kn.Text(self.font, "")
+        self.willow_text = kn.Text(self.font, "")
         self.end_message_text = kn.Text(self.font, "")
 
         self.player = Player()
@@ -48,6 +49,11 @@ class NightState(StateType):
         self.path_tiles = set()
 
         self.show_exit_debug_boxes = False
+
+        # Willow interaction tile coordinate.
+        # Tile coordinate, not pixel coordinate.
+        self.willow_coordinate = kn.Vec2(54, 41)
+        self.willow_mode = False
 
         self.night_ending = False
         self.end_message = ""
@@ -75,6 +81,8 @@ class NightState(StateType):
 
         self.dead_people = []
 
+        self.willow_mode = len(self.unfinished_tasks) == 0
+
         self.night_ending = False
         self.end_message = ""
         self.end_timer = 0.0
@@ -93,7 +101,10 @@ class NightState(StateType):
             self.player.update_boxes()
 
         self.build_path_tiles()
-        self.spawn_dead_people_from_unfinished_tasks()
+
+        if self.willow_mode == False:
+            self.spawn_dead_people_from_unfinished_tasks()
+
         self.snap_camera_to_player()
 
     def handle_event(self, event):
@@ -110,13 +121,17 @@ class NightState(StateType):
         self.player.move(self.get_collision_layer(), skeleton_colliders)
 
         if kn.input.is_just_pressed("Interact"):
-            self.interact_with_dead_people()
+            if self.willow_mode:
+                self.try_willow_interaction()
+            else:
+                self.interact_with_dead_people()
 
         # Skeletons only care about the player's body.
-        for dead_person in self.dead_people:
-            dead_person.update(self.player.collider)
+        if self.willow_mode == False:
+            for dead_person in self.dead_people:
+                dead_person.update(self.player.collider)
 
-        self.check_night_end_conditions()
+            self.check_night_end_conditions()
 
         self.snap_camera_to_player()
 
@@ -183,6 +198,15 @@ class NightState(StateType):
                 colliders.append(dead_person.collider)
 
         return colliders
+
+    def try_willow_interaction(self):
+        willow_rect = self.get_tile_rect(self.willow_coordinate)
+
+        if self.rects_overlap(self.player.interact_box, willow_rect):
+            self.start_ending("Good job being responsible :D")
+            return True
+
+        return False
 
     def interact_with_dead_people(self):
         for dead_person in self.dead_people:
@@ -344,6 +368,11 @@ class NightState(StateType):
     def draw_ui(self):
         self.night_text.text = "Night"
         self.night_text.draw(kn.Vec2(20, 20), kn.Anchor.TOP_LEFT)
+
+        if self.willow_mode:
+            self.willow_text.text = "Go to the willow tree..."
+            self.willow_text.draw(kn.Vec2(20, 50), kn.Anchor.TOP_LEFT)
+            return
 
         total_dead_people = len(self.dead_people)
         returned_dead_people = 0

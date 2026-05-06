@@ -19,7 +19,7 @@ class DayState(StateType):
         self.timer_text = kn.Text(self.font, "")
         self.task_counter_text = kn.Text(self.font, "")
 
-        self.day_length = 45.0
+        self.day_length = 60
         self.time_left = self.day_length
 
         self.player = Player()
@@ -149,11 +149,12 @@ class DayState(StateType):
     def update(self):
         dt = kn.time.get_delta()
 
-        self.time_left -= dt
+        if self.interactables.all_tasks_finished() == False:
+            self.time_left -= dt
 
-        if self.time_left <= 0:
-            self.go_to_nightstate()
-            return
+            if self.time_left <= 0:
+                self.go_to_nightstate()
+                return
 
         self.player.move(self.get_collision_layer())
 
@@ -260,7 +261,11 @@ class DayState(StateType):
         completed_tasks = self.interactables.total_tasks - self.interactables.current_tasks_counter
         total_tasks = self.interactables.total_tasks
 
-        self.task_counter_text.text = f"{completed_tasks}/{total_tasks}"
+        if self.interactables.all_tasks_finished():
+            self.task_counter_text.text = "Go to the shed..."
+        else:
+            self.task_counter_text.text = f"{completed_tasks}/{total_tasks}"
+
         self.task_counter_text.draw(kn.Vec2(20, 50), kn.Anchor.TOP_LEFT)
 
     def go_to_nightstate(self):
